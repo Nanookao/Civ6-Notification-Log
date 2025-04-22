@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Mod id="736a13ed-465a-4722-b759-873058c03763" version="1">
+	<Properties>
+		<Name>Notification Log</Name>
+		<Description>This mod adds a notification log to the World Tracker. Here you can see the most recent gossip entries and combat results from the past turn for quick reference.[NEWLINE][NEWLINE]Features:[NEWLINE]- Toggle log on or off in the World Tracker drop down menu.[NEWLINE]- While active it will suppress the standard notifications.[NEWLINE]- Notification icon and count for new entries.[NEWLINE]- Size of log can be adjusted to user preference.[NEWLINE]- Log Persist Mode. The last 50 entries will be stored in the log.[NEWLINE]- Log can automatically scale based on number of entries.[NEWLINE]- Compatible with Simplified Gossip and Simplified Combat Reports.</Description>
+		<Teaser>Adds a notification log to the world tracker.</Teaser>
+		<Authors>FinalFreak16</Authors>
+		<AffectsSavedGames>0</AffectsSavedGames>
+		<CompatibleVersions>2.0</CompatibleVersions>
+		<SubscriptionID>1459493312</SubscriptionID>
+	</Properties>
+ 
+	<InGameActions>
+		<UpdateText id="UpdateText">
+		  <File>Localisation.sql</File>
+		</UpdateText>
+		<ImportFiles id="AddLogsToWorldTracker">
+			<Properties>
+				<LoadOrder>6085</LoadOrder>
+			</Properties> 
+			<File>UI/WorldTracker.xml</File>		
+			<File>UI/StatusMessagePanel.lua</File>
+		</ImportFiles>	
+		<UpdateDatabase id="FF16_LogSettings">
+			<Items>
+			  <File>Defaults.sql</File>
+			</Items>
+		</UpdateDatabase>
+		
+		<!-- Files for Expansion2 Ruleset -->
+		<ReplaceUIScript id="AddLogsToWorldTracker_EXPANSION2" criteria="Expansion2">
+			<Properties>
+				<LoadOrder>6086</LoadOrder>
+				<LuaContext>WorldTracker</LuaContext>
+				<LuaReplace>UI/WorldTracker_FF16.lua</LuaReplace>
+			</Properties>
+		</ReplaceUIScript>
+		
+		<ImportFiles id="UpdateWorldCrisisTracker_EXPANSION2" criteria="Expansion2">>
+			<Properties>
+				<LoadOrder>6087</LoadOrder>
+			</Properties> 	
+			<File>UI/WorldCrisisTracker.xml</File>
+		</ImportFiles>		
+	</InGameActions>
+
+	<Files>
+		<File>Defaults.sql</File>
+		<File>Localisation.sql</File>
+		<File>UI/WorldTracker.xml</File>
+		<File>UI/WorldCrisisTracker.xml</File>
+		<File>UI/StatusMessagePanel.lua</File>
+		<File>UI/WorldTracker_FF16.lua</File>
+	</Files>
+  
+</Mod>
