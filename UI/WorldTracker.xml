@@ -94,17 +94,17 @@
 		<Grid	ID="MainPanel" Size="296,28"  Texture="ResearchPanel_Frame" Color="15,56,89,205" ConsumeMouseOver="0"> 									
 			<Box ID="GossipLogPanel" Anchor="C,T" Offset="0,1" Size="294,28"		Color="15,56,89,205">			  
 				<Image Size="parent-4,4" 	Offset="2,25" Texture="Controls_DecoMapScale" StretchMode="Tile" Color="42,75,108,255"/>	
-				<TextButton	ID="NewLogNumber" Anchor="L,T"	Offset="5,4"	String=""	Style="FontFlair16"	Color0="150,150,150,255" />
+				<TextButton	ID="NewLogNumber" Anchor="R,T"	Offset="5,4"	String=""	Style="FontFlair16"	Color0="150,150,150,255" />
 				<Stack	Anchor="C,T" Offset="0" StackGrowth="Right" >  
 					<Image Offset="0,1" Size="22,22" IconSize="22" Icon="ICON_GOSSIP"/>
 					<TextButton		ID="TitleButton" Offset="2,6" Anchor="C,T"	Size="200,40"	Style="PanelHeaderText" String="LOC_FF16_NOTIFICATION_LOG_TITLE" />			
 				</Stack>
 					
-				<GridButton	ID="OptionsButton" Anchor="R,T" Offset="1,-1" Size="25,25" Texture="Controls_ButtonControl" SliceCorner="10,10" SliceSize="1,1" SliceTextureSize="24,24" StateOffsetIncrement="0,24"																									ToolTip="LOC_WORLDTRACKER_ENABLE_TEXT">
+				<GridButton	ID="OptionsButton" Anchor="L,T" Offset="1,-1" Size="25,25" Texture="Controls_ButtonControl" SliceCorner="10,10" SliceSize="1,1" SliceTextureSize="24,24" StateOffsetIncrement="0,24"																									ToolTip="LOC_WORLDTRACKER_ENABLE_TEXT">
 					<Image  Size="20,17" Texture="Controls_MenuIcon" Anchor="C,C" Color="200,200,200"/>
 				 </GridButton>	
 				 
-				<Container	Size="parent,parent-5"	Offset="-5,0" >
+				<Container	ID="GossipLogContainer" Size="parent,parent-5"	Offset="-5,0" >
 					<ScrollPanel ID="GossipLogScrollPanel"	Anchor="L,T" Offset="20,35" Vertical="1" Size="296,parent-35"> 
 						<ScrollBar ID="GossipScrollBar" Style="Slider_Blue" Offset="20,0" Anchor="R,C"/> 
 						<Stack	ID="GossipLogStack" Anchor="L,T" Offset="-5,-7" StackGrowth="Top" />    
