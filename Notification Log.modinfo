@@ -11,24 +11,26 @@
 	</Properties>
  
 	<InGameActions>
-		<UpdateText id="UpdateText">
+		<UpdateText id="NotificationLog_UpdateText">
 		  <File>Localisation.sql</File>
 		</UpdateText>
-		<ImportFiles id="AddLogsToWorldTracker">
+
+		<ImportFiles id="NotificationLog_ImportFiles">
 			<Properties>
 				<LoadOrder>6085</LoadOrder>
 			</Properties> 
 			<File>UI/WorldTracker.xml</File>		
 			<File>UI/StatusMessagePanel.lua</File>
 		</ImportFiles>	
-		<UpdateDatabase id="FF16_LogSettings">
+
+		<UpdateDatabase id="NotificationLog_UpdateDatabase">
 			<Items>
 			  <File>Defaults.sql</File>
 			</Items>
 		</UpdateDatabase>
 		
 		<!-- Files for Expansion2 Ruleset -->
-		<ReplaceUIScript id="AddLogsToWorldTracker_EXPANSION2" criteria="Expansion2">
+		<ReplaceUIScript id="NotificationLog_WorldTracker_EXP2" criteria="Expansion2">
 			<Properties>
 				<LoadOrder>6086</LoadOrder>
 				<LuaContext>WorldTracker</LuaContext>
@@ -36,7 +38,7 @@
 			</Properties>
 		</ReplaceUIScript>
 		
-		<ImportFiles id="UpdateWorldCrisisTracker_EXPANSION2" criteria="Expansion2">>
+		<ImportFiles id="NotificationLog_WorldCrisisTracker_EXP2" criteria="Expansion2">>
 			<Properties>
 				<LoadOrder>6087</LoadOrder>
 			</Properties> 	
