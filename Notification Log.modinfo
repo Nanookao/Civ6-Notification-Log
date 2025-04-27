@@ -21,11 +21,10 @@
 			<File>Localisation.sql</File>
 		</UpdateText>
 
-		<ImportFiles id="NotificationLog_ImportFiles">
+		<ImportFiles id="NotificationLog_StatusMessagePanel">
 			<Properties>
 				<LoadOrder>6085</LoadOrder>
 			</Properties> 
-			<File>UI/WorldTracker_NotificationLog.xml</File>		
 			<File>UI/StatusMessagePanel.lua</File>
 		</ImportFiles>
 
@@ -44,6 +43,15 @@
 			</Properties> 	
 			<File>UI/WorldCrisisTracker.xml</File>
 		</ImportFiles>		
+
+		<AddUserInterfaces id="NotificationLog_WorldTracker">
+			<Properties>
+				<Context>InGame</Context>
+				<LoadOrder>1000</LoadOrder>
+			</Properties>
+			<File>UI/WorldTracker_NotificationLog.xml</File>		
+		</AddUserInterfaces>
+
 	</InGameActions>
 
 	<Files>
