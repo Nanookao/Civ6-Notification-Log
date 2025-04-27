@@ -8,9 +8,9 @@
 
 	<!-- FF16: New Instances for Combat and Gossip Logs -->
 	<Instance	Name="GossipLogInstance">                                
-		<Grid	ID="MainPanel" Size="296,28"  Texture="ResearchPanel_Frame" Color="15,56,89,205" ConsumeMouseOver="0"> 									
-			<Box ID="GossipLogPanel" Anchor="C,T" Offset="0,1" Size="294,28"		Color="15,56,89,205">			  
-				<Image Size="parent-4,4" 	Offset="2,25" Texture="Controls_DecoMapScale" StretchMode="Tile" Color="42,75,108,255"/>	
+		<Grid	ID="MainPanel" Size="296,28" Color="15,56,89,0" ConsumeMouseOver="0"> 									
+			<Box ID="GossipLogPanel" Anchor="C,T" Offset="0,0" Size="parent,28"		Color="15,30,60,220">
+				<Image Size="parent-4,4" 	Offset="2,25" Texture="Controls_DecoMapScale" StretchMode="Tile" Color="80,90,140,220"/>
 				<TextButton	ID="NewLogNumber" Anchor="R,T"	Offset="5,4"	String=""	Style="FontFlair16"	Color0="150,150,150,255" />
 				<Stack	Anchor="C,T" Offset="0" StackGrowth="Right" >  
 					<Image Offset="0,1" Size="22,22" IconSize="22" Icon="ICON_GOSSIP"/>
