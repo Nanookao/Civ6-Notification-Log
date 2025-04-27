@@ -133,7 +133,7 @@
 	</Instance>
 	
 	<Instance Name="GossipOptionsPanel">     
-		<Container	ID="GossipOptionsRoot"	Offset="300,-76" 	Anchor="L,T" Size="280,28" Hidden="1"> 
+		<Container	ID="GossipOptionsRoot"	Offset="15,-76" 	Anchor="L,T" Size="280,28" Hidden="1"> 
 			<Grid ID="Background" Size="280,auto" Anchor="L,T" Padding="10,5" Offset="0,69" SizePadding="0,15" Style="EventPopupFrame" ConsumeMouse="1">
 				<Stack ID="MainStack" Anchor="C,T" Offset="0,26">
 					<Label Anchor="C,T" Offset="0,2" Style="ReportBottomLabelText" String="LOC_FF16_LOG_OPTIONS_TITLE" />
