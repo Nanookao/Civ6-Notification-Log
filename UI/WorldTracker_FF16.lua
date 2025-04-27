@@ -490,7 +490,8 @@ function Initialize()
 	end
 
 	--FF16 Add events for Gossip Log
-	m_gossipLogInstance.TitleText:RegisterCallback(Mouse.eLClick, OnOpenGossipLogOptions);
+	m_gossipLogInstance.TitleButton:RegisterCallback(Mouse.eLClick, function() ToggleGossipLog() end );
+	m_gossipLogInstance.TitleButton:RegisterCallback(Mouse.eRClick, ClearGossipLog);
 	m_gossipLogInstance.NewLogNumber:RegisterCallback(Mouse.eRClick, ClearGossipLog);
 	m_gossipLogInstance.OptionsButton:RegisterCallback(Mouse.eLClick, OnOpenGossipLogOptions);
 	m_gossipLogInstance.OptionsButton:SetToolTipString(Locale.Lookup("LOC_FF16_NOTIFICATION_LOG_TOOLTIP"));

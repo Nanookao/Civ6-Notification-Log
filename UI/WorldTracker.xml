@@ -97,7 +97,7 @@
 				<TextButton	ID="NewLogNumber" Anchor="L,T"	Offset="5,4"	String=""	Style="FontFlair16"	Color0="150,150,150,255" />
 				<Stack	Anchor="C,T" Offset="0" StackGrowth="Right" >  
 					<Image Offset="0,1" Size="22,22" IconSize="22" Icon="ICON_GOSSIP"/>
-					<TextButton		ID="TitleText" Offset="2,6" Anchor="C,T"	Size="200,40"	Style="PanelHeaderText" String="LOC_FF16_NOTIFICATION_LOG_TITLE" />			
+					<TextButton		ID="TitleButton" Offset="2,6" Anchor="C,T"	Size="200,40"	Style="PanelHeaderText" String="LOC_FF16_NOTIFICATION_LOG_TITLE" />			
 				</Stack>
 					
 				<GridButton	ID="OptionsButton" Anchor="R,T" Offset="1,-1" Size="25,25" Texture="Controls_ButtonControl" SliceCorner="10,10" SliceSize="1,1" SliceTextureSize="24,24" StateOffsetIncrement="0,24"																									ToolTip="LOC_WORLDTRACKER_ENABLE_TEXT">
