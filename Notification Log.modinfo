@@ -19,7 +19,7 @@
 			<Properties>
 				<LoadOrder>6085</LoadOrder>
 			</Properties> 
-			<File>UI/WorldTracker.xml</File>		
+			<File>UI/WorldTracker_NotificationLog.xml</File>		
 			<File>UI/StatusMessagePanel.lua</File>
 		</ImportFiles>	
 
@@ -34,7 +34,7 @@
 			<Properties>
 				<LoadOrder>6086</LoadOrder>
 				<LuaContext>WorldTracker</LuaContext>
-				<LuaReplace>UI/WorldTracker_FF16.lua</LuaReplace>
+				<LuaReplace>UI/WorldTracker_NotificationLog.lua</LuaReplace>
 			</Properties>
 		</ReplaceUIScript>
 		
@@ -49,10 +49,10 @@
 	<Files>
 		<File>Defaults.sql</File>
 		<File>Localisation.sql</File>
-		<File>UI/WorldTracker.xml</File>
+		<File>UI/WorldTracker_NotificationLog.xml</File>
 		<File>UI/WorldCrisisTracker.xml</File>
 		<File>UI/StatusMessagePanel.lua</File>
-		<File>UI/WorldTracker_FF16.lua</File>
+		<File>UI/WorldTracker_NotificationLog.lua</File>
 	</Files>
   
 </Mod>
