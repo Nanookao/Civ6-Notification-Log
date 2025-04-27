@@ -475,8 +475,12 @@ end
 
 
 function Initialize()
-	print("FinalFreak16: Loading Mod - Notification Log.");
-	
+	print("Initialize()")
+
+	-- Hot-reload events
+	ContextPtr:SetInitHandler(OnInit);
+	ContextPtr:SetShutdown(OnShutdown);
+
 	ContextPtr:BuildInstanceForControl( "GossipLogInstance", 	m_gossipLogInstance,		Controls.WorldTrackerVerticalContainer );
 	ContextPtr:BuildInstanceForControl( "GossipOptionsPanel",  	m_gossipOptionsInstance,	m_gossipLogInstance.MainPanel );
 
@@ -494,12 +498,27 @@ function Initialize()
 	m_gossipLogInstance.GossipLogScrollPanel:RegisterScrollCallback(OnScroll);
 	
 	InitializeLogPreferences();
-	
-	--FF16: Events
-	LuaEvents.Custom_GossipMessage.Add(UpdateLogs);
-	Events.LocalPlayerTurnEnd.Add( ClearLogs );
-	Events.StatusMessage.Add(UpdateLogs);
-	Events.LocalPlayerTurnBegin.Add(OnLocalPlayerTurnBegin);
 	--Test();
 end
-Initialize();
+
+
+function OnInit()
+	print("OnInit()")
+
+	LuaEvents.Custom_GossipMessage.Add(UpdateLogs)
+	Events.StatusMessage          .Add(UpdateLogs)
+	Events.LocalPlayerTurnBegin   .Add(OnLocalPlayerTurnBegin)
+	Events.LocalPlayerTurnEnd     .Add(ClearLogs)
+end
+
+function OnShutdown()
+	print("OnShutdown()")
+
+	LuaEvents.Custom_GossipMessage.Remove(UpdateLogs)
+	Events.StatusMessage          .Remove(UpdateLogs)
+	Events.LocalPlayerTurnBegin   .Remove(OnLocalPlayerTurnBegin)
+	Events.LocalPlayerTurnEnd     .Remove(ClearLogs)
+end
+
+
+Initialize()
