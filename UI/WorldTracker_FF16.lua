@@ -10,10 +10,7 @@ include("WorldTracker_Expansion1");
 -- ===========================================================================
 --	VARIABLES
 -- ===========================================================================
--- Globals
-m_hideGossipLog		 = false; --Default state for gossip log visibility
-m_persistGossipLog	 = false; --Default state for gossip entries persisting between turns
-
+local m_persistGossipLog        :boolean  = false   -- Default state for gossip entries persisting between turns
 local m_gossipLogInstance		:table	 = {}; 		-- New Gossip log instance
 local m_gossipLogNewEntryCount	:number  = 0;		-- Counter for number of new entries each turn
 local m_gossipEntryInstances	:table	 = {};
@@ -57,21 +54,15 @@ end
 -- ===========================================================================
 
 -- Toggle Log on and off
-function ToggleGossipLog(hideGossipLog:boolean)
-	if hideGossipLog then
-		--print("Show Gossip Log");
-		m_gossipLogInstance.MainPanel:SetHide( false );
-		Controls.GossipCheck:SetCheck( true);
-		m_hideGossipLog = false;
-		LuaEvents.FF16_GossipLogEnabled();
-	else 
-		--print("Hide Gossip Log");
-		m_gossipLogInstance.MainPanel:SetHide( true );
-		Controls.GossipCheck:SetCheck( false );
-		m_hideGossipLog = true;
-		LuaEvents.FF16_GossipLogDisabled();
-	end
-	
+function ToggleGossipLog(hide :boolean)
+  -- print( "ToggleGossipLog()" )
+  local uiList = m_gossipLogInstance.GossipLogContainer
+  if hide == nil then  hide = not uiList:IsHidden()  end
+
+  uiList:SetHide(hide)
+  if Controls.GossipCheck then  Controls.GossipCheck:SetCheck(not hide)  end
+  -- LuaEvents.WorldTracker_ToggleNotificationLogPanel(hide)
+
 	RealizeEmptyMessage();
 	RealizeStack();
 end
@@ -492,14 +483,12 @@ function Initialize()
 	
 	ContextPtr:BuildInstanceForControl( "GossipLogInstance", 	m_gossipLogInstance,		Controls.WorldTrackerVerticalContainer );
 	ContextPtr:BuildInstanceForControl( "GossipOptionsPanel",  	m_gossipOptionsInstance,	m_gossipLogInstance.MainPanel );
-		
-	Controls.GossipCheck:SetCheck(true);
-	Controls.GossipCheck:RegisterCheckHandler(			function() ToggleGossipLog(m_hideGossipLog); end);
-	
-	--FF16: Set default log visibility
-	ToggleGossipLog(not m_hideGossipLog)
 
-	
+	if Controls.GossipCheck then
+		Controls.GossipCheck:SetCheck(true)
+		Controls.GossipCheck:RegisterCheckHandler( function() ToggleGossipLog(not Controls.GossipCheck:IsChecked()) end )
+	end
+
 	--FF16 Add events for Gossip Log
 	m_gossipLogInstance.TitleText:RegisterCallback(Mouse.eLClick, OnOpenGossipLogOptions);
 	m_gossipLogInstance.NewLogNumber:RegisterCallback(Mouse.eRClick, ClearGossipLog);
