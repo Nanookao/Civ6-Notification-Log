@@ -50,9 +50,9 @@
 	</Instance>
 	
 	<Instance Name="GossipOptionsPanel">     
-		<Container	ID="GossipOptionsRoot"	Offset="15,-76" 	Anchor="L,T" Size="280,28" Hidden="1"> 
-			<Grid ID="Background" Size="280,auto" Anchor="L,T" Padding="10,5" Offset="0,69" SizePadding="0,15" Style="EventPopupFrame" ConsumeMouse="1">
-				<Stack ID="MainStack" Anchor="C,T" Offset="0,26">
+		<Container d="" ID="GossipOptionsRoot"	Offset="30,25" 	Anchor="L,T" Size="280,auto" Hidden="1">
+			<Grid ID="Background" Size="280,auto" Anchor="L,T" Offset="-10,-5" SizePadding="0,15" Style="EventPopupFrame" ConsumeMouse="1">
+				<Stack d="" ID="MainStack" Anchor="C,T" Offset="0,26">
 					<Label Anchor="C,T" Offset="0,2" Style="ReportBottomLabelText" String="LOC_FF16_LOG_OPTIONS_TITLE" />
 					
 					<Container Anchor="L,C" Size="200,32" Offset="0,10">
@@ -67,8 +67,8 @@
 						<Label String="8" Style="ShellOptionText" WrapWidth="350" Anchor="C,C" ID="LogMaxSizeText" Offset="108,10" />
 					</Container>
 					
-					<Stack Anchor="R,T" StackGrowth="Left">
-						<GridButton ID="EmptyLogCheckBox" Anchor="L,C" Offset="0,10" Size="230,24" Style="CheckBoxControl" String="LOC_FF16_CLEARLOG_OPTION" />
+					<Stack Anchor="C,T" Offset="0,10" StackGrowth="Left">
+						<GridButton ID="EmptyLogCheckBox" Anchor="L,C" Size="230,24" Style="CheckBoxControl" String="LOC_FF16_CLEARLOG_OPTION" />
 					</Stack>
 
 				</Stack>
