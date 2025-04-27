@@ -2,10 +2,6 @@
 -- Created by FinalFreak16
 -- Notification Log Mod - v2.0
 --]]
--- ===========================================================================
--- Base File
--- ===========================================================================
-include("WorldTracker_Expansion1");
 
 
 -- ===========================================================================
@@ -31,28 +27,15 @@ local m_gossipOptionsHidden		:boolean = true;
 local m_gossipTurnCounterAdded	:boolean = false;
 local m_isCustomGossipMessage	:boolean = false;
 
--- ===========================================================================
 
 -- ===========================================================================
---	OVERRIDE FUNCTIONS
+--	Event functions
 -- ===========================================================================
-function RealizeEmptyMessage()
-	local hideall = (m_hideChat and m_hideCivics and m_hideResearch and m_hideGossipLog)
-	Controls.EmptyPanel:SetHide(not hideall);
-end
 
 function OnLocalPlayerTurnBegin()
-	local localPlayer = Game.GetLocalPlayer();
-	if localPlayer ~= -1 then
-		m_needsRefresh = true;
-	end
-	
 	m_gossipTurnCounterAdded = false;
 end
 
--- ===========================================================================
---	NEW FUNCTIONS
--- ===========================================================================
 
 -- Toggle Log on and off
 function ToggleGossipLog(hide :boolean)
