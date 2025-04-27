@@ -206,7 +206,14 @@ function ClearGossipLog()
 		m_gossipLogInstance.GossipLogPanel:SetSizeY(m_GL_GossipLogPanel_SizeY);
 		UpdateGossipLogScrollBar(m_gossipLogNewEntryCount);
 	end
+end
 
+
+function OnScroll(control :table, percent :number)
+  local pScrollPanel = m_gossipLogInstance.GossipLogScrollPanel
+  if pScrollPanel:GetScrollValue() ~= percent then
+    pScrollPanel:SetScrollValue(percent)
+  end
 end
 
 
@@ -484,11 +491,7 @@ function Initialize()
 	m_gossipLogInstance.NewLogNumber:RegisterCallback(Mouse.eRClick, ClearGossipLog);
 	m_gossipLogInstance.OptionsButton:RegisterCallback(Mouse.eLClick, OnOpenGossipLogOptions);
 	m_gossipLogInstance.OptionsButton:SetToolTipString(Locale.Lookup("LOC_FF16_NOTIFICATION_LOG_TOOLTIP"));
-	m_gossipLogInstance.GossipLogScrollPanel:RegisterScrollCallback(function(control:table, percent:number)
-		if m_gossipLogInstance.GossipLogScrollPanel:GetScrollValue() ~= percent then
-			m_gossipLogInstance.GossipLogScrollPanel:SetScrollValue(percent);
-		end
-	end);
+	m_gossipLogInstance.GossipLogScrollPanel:RegisterScrollCallback(OnScroll);
 	
 	InitializeLogPreferences();
 	
