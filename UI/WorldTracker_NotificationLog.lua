@@ -1,3 +1,5 @@
+print( "Loading WorldTracker_NotificationLog.lua, ContextPtr:GetID():", ContextPtr:GetID() )
+local PANEL_ID = "500-NotificationLog"
 --[[
 -- Created by FinalFreak16
 -- Notification Log Mod - v2.0
@@ -481,8 +483,9 @@ function Initialize()
 	ContextPtr:SetInitHandler(OnInit);
 	ContextPtr:SetShutdown(OnShutdown);
 
-	ContextPtr:BuildInstanceForControl( "GossipLogInstance", 	m_gossipLogInstance,		Controls.WorldTrackerVerticalContainer );
-	ContextPtr:BuildInstanceForControl( "GossipOptionsPanel",  	m_gossipOptionsInstance,	m_gossipLogInstance.MainPanel );
+	-- ContextPtr:BuildInstanceForControl( "GossipLogInstance", m_gossipLogInstance, Controls.WorldTrackerVerticalContainer )
+	ContextPtr:BuildInstance( "GossipLogInstance", m_gossipLogInstance )
+	ContextPtr:BuildInstanceForControl( "GossipOptionsPanel", m_gossipOptionsInstance, m_gossipLogInstance.MainPanel )
 
 	if Controls.GossipCheck then
 		Controls.GossipCheck:SetCheck(true)
@@ -504,6 +507,7 @@ end
 
 function OnInit()
 	print("OnInit()")
+	ExposedMembers.WorldTracker:AttachPanel(PANEL_ID, m_gossipLogInstance.MainPanel, Controls.GossipCheck)
 
 	LuaEvents.Custom_GossipMessage.Add(UpdateLogs)
 	Events.StatusMessage          .Add(UpdateLogs)
@@ -513,6 +517,7 @@ end
 
 function OnShutdown()
 	print("OnShutdown()")
+	ExposedMembers.WorldTracker:AttachPanel(PANEL_ID, nil, nil)
 
 	LuaEvents.Custom_GossipMessage.Remove(UpdateLogs)
 	Events.StatusMessage          .Remove(UpdateLogs)
