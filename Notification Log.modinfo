@@ -9,10 +9,16 @@
 		<CompatibleVersions>2.0</CompatibleVersions>
 		<SubscriptionID>1459493312</SubscriptionID>
 	</Properties>
- 
+
 	<InGameActions>
+		<UpdateDatabase id="NotificationLog_UpdateDatabase">
+			<Items>
+				<File>Defaults.sql</File>
+			</Items>
+		</UpdateDatabase>
+
 		<UpdateText id="NotificationLog_UpdateText">
-		  <File>Localisation.sql</File>
+			<File>Localisation.sql</File>
 		</UpdateText>
 
 		<ImportFiles id="NotificationLog_ImportFiles">
@@ -21,14 +27,8 @@
 			</Properties> 
 			<File>UI/WorldTracker_NotificationLog.xml</File>		
 			<File>UI/StatusMessagePanel.lua</File>
-		</ImportFiles>	
+		</ImportFiles>
 
-		<UpdateDatabase id="NotificationLog_UpdateDatabase">
-			<Items>
-			  <File>Defaults.sql</File>
-			</Items>
-		</UpdateDatabase>
-		
 		<!-- Files for Expansion2 Ruleset -->
 		<ReplaceUIScript id="NotificationLog_WorldTracker_EXP2" criteria="Expansion2">
 			<Properties>
@@ -49,10 +49,10 @@
 	<Files>
 		<File>Defaults.sql</File>
 		<File>Localisation.sql</File>
-		<File>UI/WorldTracker_NotificationLog.xml</File>
-		<File>UI/WorldCrisisTracker.xml</File>
 		<File>UI/StatusMessagePanel.lua</File>
+		<File>UI/WorldCrisisTracker.xml</File>
 		<File>UI/WorldTracker_NotificationLog.lua</File>
+		<File>UI/WorldTracker_NotificationLog.xml</File>
 	</Files>
-  
+
 </Mod>

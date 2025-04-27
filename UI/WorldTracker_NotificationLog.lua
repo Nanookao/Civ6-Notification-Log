@@ -7,6 +7,7 @@
 -- ===========================================================================
 include("WorldTracker_Expansion1");
 
+
 -- ===========================================================================
 --	VARIABLES
 -- ===========================================================================
@@ -75,6 +76,7 @@ function ToggleGossipLogPersist(persistGossipLog:boolean)
 
 	--print("Gossip Log Persist is now: ", m_persistGossipLog);	
 end
+
 
 -- Update gossip log using Event.StatusMessage.Add() calls
 function UpdateGossipLog(logString :string, type:number )
@@ -179,6 +181,7 @@ function UpdateGossipLog(logString :string, type:number )
 	
 end
 
+
 -- Function for splitting strings
 function strSplit(self, delimiter)
     local result = {};
@@ -187,6 +190,7 @@ function strSplit(self, delimiter)
     end
     return result;
 end
+
 
 -- Empty the log between turns
 function ClearLogs()
@@ -200,20 +204,19 @@ end
 
 -- Empty the log between turns (when persist is disabled)
 function ClearGossipLog()
-
 	local numLogInstances:number = table.count(m_gossipEntryInstances);
 
 	-- limit chat log
 	for i=1, numLogInstances do
 		m_gossipLogInstance.GossipLogStack:ReleaseChild( m_gossipEntryInstances[i].LogRoot);	
 	end
-	
+
 	-- Reset log
 	m_gossipEntryInstances = {};
 	m_gossipLogInstance.NewLogNumber:SetText("");
 	m_gossipLogInstance.GossipLogStack:CalculateSize();
 	m_gossipLogInstance.GossipLogStack:ReprocessAnchoring();
-	
+
 	-- Reset Log Size
 	if(m_GL_CurrentSetSize == 0) then
 		m_gossipLogInstance.MainPanel:SetSizeY(m_GL_MainPanel_SizeY);
@@ -223,9 +226,9 @@ function ClearGossipLog()
 
 end
 
+
 -- Toggle Options Panel for Log
 function OnOpenGossipLogOptions()
-
 	if(m_gossipOptionsHidden) then
 		m_gossipOptionsInstance.GossipOptionsRoot:SetHide(false);
 		m_gossipOptionsHidden = false;
@@ -235,9 +238,10 @@ function OnOpenGossipLogOptions()
 	end
 end
 
+
 -- Intercept screen notifications and forward to log instead
 function UpdateLogs(logString :string, fDisplayTime:number, type:number )
-	
+
 	if(type == ReportingStatusTypes.GOSSIP) then		
 		if not(m_gossipTurnCounterAdded) then
 			AddTurnCounterToLogs(Game.GetCurrentGameTurn(), 1);
@@ -246,16 +250,16 @@ function UpdateLogs(logString :string, fDisplayTime:number, type:number )
 		
 		UpdateGossipLog(logString, type);
 	elseif(type == ReportingStatusTypes.DEFAULT) then
-		
+
 		if not(m_combatTurnCounterAdded) then
 			AddTurnCounterToLogs(Game.GetCurrentGameTurn(), 2);
 			m_combatTurnCounterAdded = true;
 		end
-		
+
 		UpdateGossipLog(logString, type);
 	end
-		
-	 UI.PlaySound("Main_Menu_Mouse_Over");
+
+	UI.PlaySound("Main_Menu_Mouse_Over");
 end
 
 -- Change the log size based on specified size in options
@@ -287,7 +291,7 @@ end
 
 -- Show/Hide the scrollbar when necessary
 function UpdateGossipLogScrollBar(logSize:number)
-	
+
 	if(m_persistGossipLog) then
 		local numLogInstances:number = table.count(m_gossipEntryInstances);
 		if(numLogInstances) then
@@ -314,6 +318,7 @@ function UpdateGossipLogScrollBar(logSize:number)
 	end
 end
 
+
 function AddTurnCounterToLogs(turnNo:number, logType:number)
 	local turnLookup = Locale.Lookup("{LOC_TOP_PANEL_CURRENT_TURN:upper} ");
 	local turnString = "[COLOR_FLOAT_GOLD]" .. turnLookup  .. turnNo;
@@ -327,8 +332,8 @@ function AddTurnCounterToLogs(turnNo:number, logType:number)
 	end
 end
 
-function InitializeLogPreferences()
 
+function InitializeLogPreferences()
 	-- Log Size Slider
 	m_gossipOptionsInstance.LogSizeSlider:RegisterSliderCallback(
     	function(option)
@@ -426,14 +431,13 @@ function InitializeLogPreferences()
 			end
         end
     );
-	
 end
 
+
 function PopulateCheckBox(control, current_value, check_handler, is_locked)
-    
     if (is_locked == nil) then
-		is_locked = false;
-	end
+        is_locked = false;
+    end
 
     if(current_value == 0) then
         control:SetSelected(false);
@@ -444,22 +448,22 @@ function PopulateCheckBox(control, current_value, check_handler, is_locked)
     control:SetDisabled(is_locked ~= false);
 
     if(check_handler) then
-        control:RegisterCallback(Mouse.eLClick, 
+        control:RegisterCallback(Mouse.eLClick,
             function()
-			    local selected = not control:IsSelected();
-			    control:SetSelected(selected);
+                local selected = not control:IsSelected();
+                control:SetSelected(selected);
                 check_handler(selected);
             end
         );
-		control:RegisterCallback(Mouse.eMouseEnter, function()
+        control:RegisterCallback(Mouse.eMouseEnter, function()
             UI.PlaySound("Main_Menu_Mouse_Over");
-		end);
+        end);
     end
 
 end
 
-function Test()
-		
+
+local function Test()
 	ContextPtr:SetInputHandler( 
 	function( pInputStruct ) 
 		local uiMsg = pInputStruct:GetMessageType();
@@ -475,8 +479,10 @@ function Test()
 		end	
 		return false;
 	end, true);
-	
 end
+
+
+
 
 function Initialize()
 	print("FinalFreak16: Loading Mod - Notification Log.");
