@@ -28,6 +28,7 @@
 			<File>UI/StatusMessagePanel.lua</File>
 		</ImportFiles>
 
+<!-- ->
 		<ImportFiles id="NotificationLog_WorldTracker_lua">
 			<Properties>
 				<LoadOrder>6086</LoadOrder>
@@ -35,6 +36,7 @@
 			</Properties>
 			<File>UI/WorldTracker_NotificationLog.lua</File>
 		</ImportFiles>
+<!-- -->
 
 		<ImportFiles id="NotificationLog_WorldCrisisTracker_EXP2" criteria="Expansion2">>
 			<Properties>
