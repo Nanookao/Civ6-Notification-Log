@@ -9,6 +9,7 @@ local PANEL_ID = "500-NotificationLog"
 -- ===========================================================================
 --	VARIABLES
 -- ===========================================================================
+local m_PanelContainer          :table
 local m_persistGossipLog        :boolean  = false   -- Default state for gossip entries persisting between turns
 local m_gossipLogInstance		:table	 = {}; 		-- New Gossip log instance
 local m_gossipLogNewEntryCount	:number  = 0;		-- Counter for number of new entries each turn
@@ -49,8 +50,11 @@ function ToggleGossipLog(hide :boolean)
   if Controls.GossipCheck then  Controls.GossipCheck:SetCheck(not hide)  end
   -- LuaEvents.WorldTracker_ToggleNotificationLogPanel(hide)
 
+	if m_PanelContainer.CalculateSize then  m_PanelContainer:CalculateSize()  end
+	--[[
 	RealizeEmptyMessage();
 	RealizeStack();
+	--]]
 end
 
 -- Toggle persist mode on an off
@@ -504,6 +508,14 @@ end
 function OnInit()
 	print("OnInit()")
 	ExposedMembers.WorldTracker:AttachPanel(PANEL_ID, m_gossipLogInstance.MainPanel, Controls.GossipCheck)
+	m_PanelContainer = ExposedMembers.WorldTracker.PanelContainer
+	--[[
+	print( "PanelContainer:", m_PanelContainer, m_PanelContainer:GetID() )
+	m_PanelContainer = m_gossipLogInstance.MainPanel:GetParent()
+	print( "MainPanel:GetParent():", m_PanelContainer, m_PanelContainer:GetID() )
+	m_PanelContainer = m_gossipLogInstance.MainPanel:GetParent():GetParent()
+	print( "MainPanel:GetParent():GetParent():", m_PanelContainer, m_PanelContainer:GetID() )
+	--]]
 
 	LuaEvents.Custom_GossipMessage.Add(UpdateLogs)
 	Events.StatusMessage          .Add(UpdateLogs)
@@ -514,6 +526,7 @@ end
 function OnShutdown()
 	print("OnShutdown()")
 	ExposedMembers.WorldTracker:AttachPanel(PANEL_ID, nil, nil)
+	m_PanelContainer = nil
 
 	LuaEvents.Custom_GossipMessage.Remove(UpdateLogs)
 	Events.StatusMessage          .Remove(UpdateLogs)
