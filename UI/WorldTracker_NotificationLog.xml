@@ -27,8 +27,11 @@
 						<Stack	ID="GossipLogStack" Anchor="L,T" Offset="-5,-7" StackGrowth="Top" />    
 					</ScrollPanel>		  	   
 				</Container>	
+
+				<Grid ID="GossipDivider" Size="parent+3,default" Anchor="L,B" Offset="-2,-4" Style="Divider3Grid"/> 
+
+				<MakeInstance Name="GossipOptionsPanel" ID="GossipOptionsInstance"/>
 			</Box>
-			<Grid ID="GossipDivider" Size="parent+3,default" Anchor="L,B" Offset="-2,-4" Style="Divider3Grid"/> 
 		</Grid>	
 	</Instance>
 	

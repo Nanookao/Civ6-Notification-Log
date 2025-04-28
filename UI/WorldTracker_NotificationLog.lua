@@ -485,7 +485,8 @@ function Initialize()
 
 	-- ContextPtr:BuildInstanceForControl( "GossipLogInstance", m_gossipLogInstance, Controls.WorldTrackerVerticalContainer )
 	ContextPtr:BuildInstance( "GossipLogInstance", m_gossipLogInstance )
-	ContextPtr:BuildInstanceForControl( "GossipOptionsPanel", m_gossipOptionsInstance, m_gossipLogInstance.MainPanel )
+	-- ContextPtr:BuildInstanceForControl( "GossipOptionsPanel", m_gossipOptionsInstance, m_gossipLogInstance.MainPanel )
+	m_gossipOptionsInstance = m_gossipLogInstance.GossipOptionsInstance
 
 	if Controls.GossipCheck then
 		Controls.GossipCheck:SetCheck(true)
