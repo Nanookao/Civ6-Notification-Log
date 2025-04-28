@@ -221,13 +221,8 @@ end
 
 -- Toggle Options Panel for Log
 function OnOpenGossipLogOptions()
-	if(m_gossipOptionsHidden) then
-		m_gossipOptionsInstance.GossipOptionsRoot:SetHide(false);
-		m_gossipOptionsHidden = false;
-	else
-		m_gossipOptionsInstance.GossipOptionsRoot:SetHide(true);
-		m_gossipOptionsHidden = true;
-	end
+	m_gossipOptionsHidden = not m_gossipOptionsHidden
+	m_gossipOptionsInstance.GossipOptionsRoot:SetHide(m_gossipOptionsHidden)
 end
 
 
