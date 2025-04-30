@@ -1,82 +1,90 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Context ID="WorldTracker">
+<!------------------------------
+-- WorldTracker_NotificationLog
+-- Version: 3.0
+-- Author: FinalFreak16, Nanookao
+-- DateCreated: 2025-04-30
+------------------------------->
+<Context>
 
-	<!--FF16: Add extra options to tracker -->
-	<Container	ID="GossipCheckButton" Size="auto,auto" Anchor="R,T">
-		<CheckBox	ID="GossipCheck"	Anchor="R,T"	Style="WorldTrackerCheckBox" TextOffset="-5" String="Notification Log" WrapWidth="180" Align="Right"/>
-	</Container>
+  <!--FF16: Add extra options to tracker -->
+  <Container ID="NotificationLogCheckButton" Size="auto,auto" Anchor="R,T">
+    <CheckBox ID="NotificationLogCheck" Anchor="R,T" Style="WorldTrackerCheckBox" TextOffset="-5" String="Notification Log" WrapWidth="180" Align="Right"/>
+  </Container>
 
-	<!-- FF16: New Instances for Combat and Gossip Logs -->
-	<Instance	Name="GossipLogInstance">                                
-		<Grid	ID="MainPanel" Size="296,28" Color="15,56,89,0" ConsumeMouseOver="0"> 									
-			<Box ID="GossipLogPanel" Anchor="C,T" Offset="0,0" Size="parent,28"		Color="15,30,60,220">
-				<Image Size="parent-4,4" 	Offset="2,25" Texture="Controls_DecoMapScale" StretchMode="Tile" Color="80,90,140,220"/>
-				<TextButton	ID="NewLogNumber" Anchor="R,T"	Offset="5,4"	String=""	Style="FontFlair16"	Color0="150,150,150,255" />
-				<Stack	Anchor="C,T" Offset="0" StackGrowth="Right" >  
-					<Image Offset="0,1" Size="22,22" IconSize="22" Icon="ICON_GOSSIP"/>
-					<TextButton		ID="TitleButton" Offset="2,6" Anchor="C,T"	Size="200,40"	Style="PanelHeaderText" String="LOC_FF16_NOTIFICATION_LOG_TITLE" />			
-				</Stack>
-					
-				<GridButton	ID="OptionsButton" Anchor="L,T" Offset="1,-1" Size="25,25" Texture="Controls_ButtonControl" SliceCorner="10,10" SliceSize="1,1" SliceTextureSize="24,24" StateOffsetIncrement="0,24"																									ToolTip="LOC_WORLDTRACKER_ENABLE_TEXT">
-					<Image  Size="20,17" Texture="Controls_MenuIcon" Anchor="C,C" Color="200,200,200"/>
-				 </GridButton>	
-				 
-				<Container	ID="GossipLogContainer" Size="parent,parent-5"	Offset="-5,0" >
-					<ScrollPanel ID="GossipLogScrollPanel"	Anchor="L,T" Offset="20,35" Vertical="1" Size="296,parent-35"> 
-						<ScrollBar ID="GossipScrollBar" Style="Slider_Blue" Offset="20,0" Anchor="R,C"/> 
-						<Stack	ID="GossipLogStack" Anchor="L,T" Offset="-5,-7" StackGrowth="Top" />    
-					</ScrollPanel>		  	   
-				</Container>	
+  <!-- FF16: New Instances for Combat and Gossip Logs -->
+  <Instance Name="NotificationLogInstance">
+    <Container ID="NotificationLogPanel" Size="296,default">
+      <Box d="1" Size="296,auto" Color="15,30,60,220" ConsumeMouseOver="0">
+        <Stack StackGrowth="Bottom">
+          <Button ID="HeaderButton" Size="parent,25" _Color="15,30,60,220">
+            <GridButton ID="OptionsButton" Anchor="L,T" Offset="1,-1" Size="25,25" Texture="Controls_ButtonControl" SliceCorner="10,10" SliceSize="1,1" SliceTextureSize="24,24" StateOffsetIncrement="0,24" ToolTip="LOC_WORLDTRACKER_ENABLE_TEXT">
+              <Image Size="20,17" Texture="Controls_MenuIcon" Anchor="C,C" Color="200,200,200"/>
+            </GridButton>
 
-				<Grid ID="GossipDivider" Size="parent+3,default" Anchor="L,B" Offset="-2,-4" Style="Divider3Grid"/> 
+            <Stack Anchor="C,T" Offset="0" StackGrowth="Right">
+              <Image Offset="0,1" Size="22,22" IconSize="22" Icon="ICON_GOSSIP"/>
+              <TextButton ID="TitleButton" Offset="2,6" Anchor="C,T" Size="200,20" Style="PanelHeaderText" String="LOC_FF16_NOTIFICATION_LOG_TITLE"/>
+            </Stack>
 
-				<MakeInstance Name="GossipOptionsPanel" ID="GossipOptionsInstance"/>
-			</Box>
-		</Grid>	
-	</Instance>
-	
-	<Instance Name="GossipLogEntry">     
-		<Container	ID="LogRoot"	Offset="0,9" 	Anchor="L,C" Size="280,35"> 
-			<Stack	Anchor="L,C"  StackGrowth="Right" >  
-				<Label	ID="Icon" Anchor="L,C" Offset="-5,2"/>
-				<Label	ID="String"	Anchor="L,C" Offset="2,0" WrapWidth="250" Color1="0,0,0,150" Style="FontNormal12" />
-			</Stack>
-			<Box ID="Divider" Anchor="L,B" Offset="-13,-5" Size="294,1" Color="255,255,255,35"/>
-		</Container>
-	</Instance>
-	
-	<Instance Name="TurnCountLogEntry">     
-		<Container	ID="LogRoot"	Offset="0,9" 	Anchor="L,C" Size="280,35"> 
-			<Label	ID="String" Anchor="C,C" Offset="-3,0" Color1="0,0,0,150" Style="FontNormal12" />
-			<Box ID="Divider" Anchor="L,B" Offset="-13,-5" Size="294,1" Color="255,255,255,35"/>
-		</Container>
-	</Instance>
-	
-	<Instance Name="GossipOptionsPanel">     
-		<Container d="" ID="GossipOptionsRoot"	Offset="30,25" 	Anchor="L,T" Size="280,auto" Hidden="1">
-			<Grid ID="Background" Size="280,auto" Anchor="L,T" Offset="-10,-5" SizePadding="0,15" Style="EventPopupFrame" ConsumeMouse="1">
-				<Stack d="" ID="MainStack" Anchor="C,T" Offset="0,26">
-					<Label Anchor="C,T" Offset="0,2" Style="ReportBottomLabelText" String="LOC_FF16_LOG_OPTIONS_TITLE" />
-					
-					<Container Anchor="L,C" Size="200,32" Offset="0,10">
-						<Label String="LOC_FF16_LOGSIZE_OPTION" Style="ShellOptionText" WrapWidth="350" Anchor="L,T" Offset="3,0" />
-						<Slider Style="SliderControl" Anchor="L,C" Size="180,13" Offset="0,10" SpaceForScroll="0" Steps="8" ID="LogSizeSlider" />
-						<Label String="Auto" Style="ShellOptionText" WrapWidth="350" Anchor="C,C" ID="LogSizeText" Offset="108,10" />
-					</Container>
-					
-					<Container Anchor="L,C" Size="200,32" Offset="0,10">
-						<Label String="LOC_FF16_MAXLOGSIZE_OPTION" Style="ShellOptionText" WrapWidth="350" Anchor="L,T" Offset="3,0" />
-						<Slider Style="SliderControl" Anchor="L,C" Size="180,13" Offset="0,10" SpaceForScroll="0" Steps="7" ID="LogMaxSizeSlider" />
-						<Label String="8" Style="ShellOptionText" WrapWidth="350" Anchor="C,C" ID="LogMaxSizeText" Offset="108,10" />
-					</Container>
-					
-					<Stack Anchor="C,T" Offset="0,10" StackGrowth="Left">
-						<GridButton ID="EmptyLogCheckBox" Anchor="L,C" Size="230,24" Style="CheckBoxControl" String="LOC_FF16_CLEARLOG_OPTION" />
-					</Stack>
+            <TextButton ID="NewMessageCount" Anchor="R,T" Offset="5,4" String="" Style="FontFlair16" Color0="150,150,150,255"/>
+          </Button>
 
-				</Stack>
-			</Grid>
-		</Container>
-	</Instance>
-	
+
+          <Container ID="Content" Size="parent,auto" Offset="-5,0">
+            <Image Anchor="C,T" Size="parent-4,4" Texture="Controls_DecoMapScale" StretchMode="Tile" Color="80,90,140,220"/>
+
+            <ScrollPanel ID="ListScroll" Anchor="L,T" Offset="20,35" Vertical="1" Size="296,parent-35">
+              <Stack ID="EntryStack" Anchor="L,T" Offset="-5,-7" StackGrowth="Top">
+                <!-- Entries are added here -->
+              </Stack>    
+              <ScrollBar ID="GossipScrollBar" Offset="0,0" Anchor="R,C" Style="Slider_Blue"/>
+            </ScrollPanel>
+
+            <Grid ID="GossipDivider" Anchor="L,B" Offset="-2,-4" Size="parent+3,default" Style="Divider3Grid"/> 
+          </Container>
+
+        </Stack>
+      </Box>
+      <MakeInstance Name="NotificationLogOptionsPopup" ID="OptionsInstance"/>
+    </Container>
+  </Instance>
+  
+  <Instance Name="NotificationEntry">
+    <Container ID="EntryRoot" Offset="0,9" Anchor="L,C" Size="280,35"> 
+      <Stack Anchor="L,C"  StackGrowth="Right">
+        <Label ID="Icon" Anchor="L,C" Offset="-5,2"/>
+        <Label ID="Message" Anchor="L,C" Offset="2,0" WrapWidth="250" Color1="0,0,0,150" Style="FontNormal12" />
+      </Stack>
+      <Box ID="Divider" Anchor="L,B" Offset="-13,-5" Size="294,1" Color="255,255,255,35"/>
+    </Container>
+  </Instance>
+
+  <Instance Name="NotificationLogOptionsPopup">
+    <Container d="" ID="OptionsPopup" Anchor="L,T" Size="280,auto" Offset="30,25" Hidden="1">
+      <Grid ID="Background" Anchor="L,T" Offset="-10,-5" Size="280,auto" SizePadding="0,15" Style="EventPopupFrame" ConsumeMouse="1">
+        <Stack d="" ID="MainStack" Anchor="C,T" Offset="0,26">
+          <Label Anchor="C,T" Offset="0,2" Style="ReportBottomLabelText" String="LOC_FF16_LOG_OPTIONS_TITLE" />
+
+          <Container ID="MinSize" Anchor="L,C" Offset="0,10" Size="200,32">
+            <Label Anchor="L,T" Offset="3,0" WrapWidth="350" Style="ShellOptionText" String="LOC_FF16_MAXLOGSIZE_OPTION" />
+            <Slider ID="Slider" Steps="8" Anchor="L,C" Offset="0,10" Size="180,13" SpaceForScroll="0" Style="SliderControl" />
+            <Label ID="Text" String="0" Anchor="C,C" Offset="108,10" WrapWidth="350" Style="ShellOptionText" />
+          </Container>
+          
+          <Container ID="MaxSize" Anchor="L,C" Offset="0,10" Size="200,32">
+            <Label Anchor="L,T" Offset="3,0" WrapWidth="350" Style="ShellOptionText" String="LOC_FF16_MAXLOGSIZE_OPTION" />
+            <Slider ID="Slider" Steps="8" Anchor="L,C" Offset="0,10" Size="180,13" SpaceForScroll="0" Style="SliderControl" />
+            <Label ID="Text" String="8" Anchor="C,C" Offset="108,10" WrapWidth="350" Style="ShellOptionText" />
+          </Container>
+
+          <Stack Anchor="C,T" Offset="0,10" StackGrowth="Left">
+            <GridButton ID="EmptyLogCheckBox" Anchor="L,C" Size="230,24" Style="CheckBoxControl" String="LOC_FF16_CLEARLOG_OPTION" />
+          </Stack>
+
+        </Stack>
+      </Grid>
+    </Container>
+  </Instance>
+
 </Context>

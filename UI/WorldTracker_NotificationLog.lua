@@ -1,537 +1,433 @@
+--------------------------------
+-- WorldTracker_NotificationLog
+-- Version: 3.0
+-- Author: FinalFreak16, Nanookao
+-- DateCreated: 2025-04-30
+--------------------------------
 print( "Loading WorldTracker_NotificationLog.lua, ContextPtr:GetID():", ContextPtr:GetID() )
 local PANEL_ID = "500-NotificationLog"
---[[
--- Created by FinalFreak16
--- Notification Log Mod - v2.0
---]]
+
+-- ===========================================================================
+--	INCLUDE
+-- ===========================================================================
+include("InstanceManager")
 
 
 -- ===========================================================================
---	VARIABLES
+--	UI references
 -- ===========================================================================
-local m_PanelContainer          :table
-local m_persistGossipLog        :boolean  = false   -- Default state for gossip entries persisting between turns
-local m_gossipLogInstance		:table	 = {}; 		-- New Gossip log instance
-local m_gossipLogNewEntryCount	:number  = 0;		-- Counter for number of new entries each turn
-local m_gossipEntryInstances	:table	 = {};
-local m_gossipOptionsInstance	:table	 = {};
-local m_maxLogEntries = 50;   --Maximum allows entries allowed in the log. WARNING: Increase this at your own risk! 
+local m_PanelContainer  :table
+local m_Instance		    :table  = {}  -- NotificationLogInstance
+ContextPtr:BuildInstance( "NotificationLogInstance", m_Instance )
+local m_CheckBox        :table  = Controls.NotificationLogCheck
+local m_OptionsInstance :table  = m_Instance.OptionsInstance
+local m_OptionsPopup    :table  = m_OptionsInstance.OptionsPopup
+-- print( "m_OptionsPopup=", m_OptionsPopup )
+local m_Panel           :table  = m_Instance.NotificationLogPanel
+local m_Header          :table  = m_Instance.TitleButton
+local m_Content         :table  = m_Instance.Content
+local m_ListScroll      :table  = m_Instance.ListScroll
+local m_EntryStack      :table  = m_Instance.EntryStack
+local m_EntryManager    :table  = InstanceManager:new("NotificationEntry", "EntryRoot", m_EntryStack)
+local m_EntryInstances  :table  = {}
+local m_maxEntries      :number = 50  -- Maximum entries allowed in the log. WARNING: Too many entries can slow down the UI.
 
--- Default Log sizes
-local m_GL_MainPanel_SizeY	 	:number = 28;  
-local m_GL_GossipLogPanel_SizeY :number = 28; 
-local m_GL_ScrollPanel_SizeY	:number = 30;
+
+
+-- ===========================================================================
+--  Constants
+-- ===========================================================================
+-- ReportingStatusTypes.DEFAULT == 103780558
+-- ReportingStatusTypes.GOSSIP  == -552441153
+-- CQUI creates 2 custom message types in CivicsTree_CQUI.lua, TechTree_CQUI.lua
+ReportingStatusTypes.CQUI_STATUS_MESSAGE_CIVIC = 3  -- Number to distinguish civic messages
+ReportingStatusTypes.CQUI_STATUS_MESSAGE_TECHS = 4  -- Number to distinguish tech messages
+ReportingStatusTypes.TurnEnd = 4000  -- arbitrary number
+
+ReportingStatusTypesInv = {}
+for k,v in pairs(ReportingStatusTypes) do
+  ReportingStatusTypesInv[v] = k
+end
+
+
+-- ===========================================================================
+--  Variables
+-- ===========================================================================
+local m_Hidden      :boolean = false
+local m_Closed      :boolean = false
+
+-- Clear notifications between turns
+local m_EmptyLogEachTurn  :boolean = (0 ~= GlobalParameters.FF16_DEFAULT_EMPTYLOG)
+-- Count the number of new entries each turn
+local m_NewMessageCount   :number  = 0
+
+-- List size limits
+local m_ListSizeMin   :number = 2 or GlobalParameters.FF16_DEFAULT_LOGSIZE
+local m_ListSizeMax   :number = 6 or GlobalParameters.FF16_DEFAULT_MAXLOGSIZE
+local m_ListSize      :number = nil   -- list size is not set until Initialize()
+local m_EntrySizeY    :number = 35+9  -- SizeY + OffsetY
+
 local m_GL_MaxAllowedSizeY		:number = 390;
-local m_GL_CurrentSetSize		:number = 0;
-local m_GL_EntrySize			:number = 44;
-
--- Flags
-local m_gossipOptionsHidden		:boolean = true;
-local m_gossipTurnCounterAdded	:boolean = false;
-local m_isCustomGossipMessage	:boolean = false;
 
 
 -- ===========================================================================
---	Event functions
+-- Show/hide
 -- ===========================================================================
+function SetHidden(hidden :boolean)
+  m_Hidden = hidden
+  -- m_CheckBox:SetCheck(not hidden)
+  m_Panel:SetHide(hidden)
+
+  -- Destroy entries to free up memory
+  if hidden then  m_EntryManager:DestroyInstances()  end
+
+  ResizePanel()
+end
+
+function SetClosed(closed :boolean)
+  UI.PlaySound(closed and "Tech_Tray_Slide_Closed" or "Tech_Tray_Slide_Open")
+  m_Closed = closed
+  m_Content:SetHide(closed)
+  ResizePanel()
+end
+  
+function TogglePanel()
+  SetClosed(not m_Closed)
+end
+
+function ToggleOptions()
+  m_OptionsPopup:SetHide(not m_OptionsPopup:IsHidden())
+end
+
+
+-- ===========================================================================
+--  Resize
+-- ===========================================================================
+function RefreshSize()
+  local newsize = minmax(#m_EntryInstances, m_ListSizeMin, m_ListSizeMax)
+  if m_ListSize == newsize then  return  end
+
+  m_ListSize = newsize
+  m_ListScroll:SetSizeY(newsize * m_EntrySizeY)
+  ResizePanel()
+end
+
+
+function ResizePanel()
+  -- m_EntryStack:CalculateSize()
+  -- m_EntryStack:ReprocessAnchoring()
+  return m_PanelContainer and m_PanelContainer:CalculateSize()
+end
+
+
+--  Helper
+function minmax(value, minimum, maximum)
+  if value < minimum then  return minimum  end
+  if value > maximum then  return maximum  end
+  return value
+end
+
+
+
+
+-- ===========================================================================
+--  Reset
+-- ===========================================================================
+function ClearNotifications()
+  SetNewMessageCount(0)
+
+  m_EntryInstances = {}
+  m_EntryManager:ResetInstances()
+  -- m_EntryManager:DestroyInstances()
+  RefreshSize()
+end
+
+
+-- ===========================================================================
+--  Events
+-- ===========================================================================
+function OnRefresh()
+  RefreshSize()
+end
+
+
+-- Monitor notifications
+function OnStatusMessage(message :string, displayTime :number, msgType :number, subType :number)
+  -- Ignore displayTime: messages stay visible until cleared
+  AddNotification(message, msgType, subType)
+  UI.PlaySound("Main_Menu_Mouse_Over")
+end
+
 
 function OnLocalPlayerTurnBegin()
-	m_gossipTurnCounterAdded = false;
+  AddNewTurnNotification( Game.GetCurrentGameTurn() )
+end
+
+function OnLocalPlayerTurnEnd()
+  -- Empty the log between turns
+  if m_EmptyLogEachTurn then  ClearNotifications()  end
+  -- New turn, new counter
+  SetNewMessageCount(0)
 end
 
 
--- Toggle Log on and off
-function ToggleGossipLog(hide :boolean)
-  -- print( "ToggleGossipLog()" )
-  local uiList = m_gossipLogInstance.GossipLogContainer
-  if hide == nil then  hide = not uiList:IsHidden()  end
-
-  uiList:SetHide(hide)
-  if Controls.GossipCheck then  Controls.GossipCheck:SetCheck(not hide)  end
-  -- LuaEvents.WorldTracker_ToggleNotificationLogPanel(hide)
-
-	if m_PanelContainer.CalculateSize then  m_PanelContainer:CalculateSize()  end
-	--[[
-	RealizeEmptyMessage();
-	RealizeStack();
-	--]]
-end
-
--- Toggle persist mode on an off
-function ToggleGossipLogPersist(persistGossipLog:boolean)
-	if persistGossipLog ~= nil then
-		m_persistGossipLog = persistGossipLog;		
-	end
-
-	--print("Gossip Log Persist is now: ", m_persistGossipLog);	
-end
 
 
--- Update gossip log using Event.StatusMessage.Add() calls
-function UpdateGossipLog(logString :string, type:number )
-	local isTurnCountEntry = false;
-	local isCombatEntry = false;
-	
-	local controlTable = {};
-	local gossipString;
-	local gossipIcon;
-	local gossipText = logString;
-	
-	--print(gossipText);
-	
-	if(type == ReportingStatusTypes.DEFAULT) then
-		isCombatEntry = true;
-		--Generate new LogEntry instance, put in controlTable, parent is Gossip log stack
-		ContextPtr:BuildInstanceForControl( "GossipLogEntry", controlTable, m_gossipLogInstance.GossipLogStack );	
-		--print(logString);
-	else	
-		if(string.find(logString, "]TURN")) then
-			ContextPtr:BuildInstanceForControl( "TurnCountLogEntry", controlTable, m_gossipLogInstance.GossipLogStack );
-			isTurnCountEntry = true;
-		else
-			--Generate new LogEntry instance, put in controlTable, parent is Gossip log stack
-			ContextPtr:BuildInstanceForControl( "GossipLogEntry", controlTable, m_gossipLogInstance.GossipLogStack );	
-		
-			-- Add icons to normal gossip text.
-			if not(string.find(logString, "ICON")) then
-				logString = "[ICON_You]" .. logString;
-			end
-		end
-	end
-			
-	-- Split string into Icon and Text
-	if not(isCombatEntry) then
-		gossipString = strSplit(logString, "] ");
-		gossipIcon = gossipString[1] .. "]";
-		gossipText = gossipString[2];
-		controlTable.LogRoot:SetOffsetX(-3);	
-	else
-		gossipIcon = "[ICON_DECLARE_SURPRISE_WAR]"
-		gossipText = logString;
-	end
-		
-	if(isTurnCountEntry) then
-		gossipText = logString;	
-	end
-	
-	if(m_isCustomGossipMessage == true) then
-		gossipText = logString;			
-		m_isCustomGossipMessage = false;	
-	end		
-		
-	--Set log entry text	
-	controlTable.String:SetText(gossipText);		
-	if(gossipIcon and not isTurnCountEntry) then
-		controlTable.Icon:SetText(gossipIcon);
-	end
-	
-	--Add entry to global instances
-	table.insert( m_gossipEntryInstances, controlTable );
+-- ===========================================================================
+--  Process notification
+-- ===========================================================================
+function AddNotification(message :string, msgType :number, subType :number)
+  local isCombat  :boolean = msgType == ReportingStatusTypes.DEFAULT
+  local isGossip  :boolean = msgType == ReportingStatusTypes.GOSSIP
+  local isTurnEnd :boolean = msgType == ReportingStatusTypes.TurnEnd
 
-	--Update number of new entries notification + tooltip
-	if not(isTurnCountEntry) then
-		m_gossipLogNewEntryCount = m_gossipLogNewEntryCount+1;
-		local newLogText = "[ICON_New]" .. m_gossipLogNewEntryCount;
-		m_gossipLogInstance.NewLogNumber:SetText(newLogText);
-	end
-	
-	-- Grammar
-	if(m_gossipLogNewEntryCount < 2) then
-		m_gossipLogInstance.NewLogNumber:SetToolTipString(m_gossipLogNewEntryCount .. " " .. Locale.Lookup("LOC_FF16_LOG_ENTRY_SINGLE"));
-	else
-		m_gossipLogInstance.NewLogNumber:SetToolTipString(m_gossipLogNewEntryCount .. " " .. Locale.Lookup("LOC_FF16_LOG_ENTRY_MULTIPLE"));
-	end
-	
-	-- Remove the earliest entry if the log limit has been reached
-	if(table.count(m_gossipEntryInstances) > m_maxLogEntries) then
-		m_gossipLogInstance.GossipLogStack:ReleaseChild( m_gossipEntryInstances[1].LogRoot);
-		table.remove(m_gossipEntryInstances, 1);
-	end
-	
-	-- Refresh log and reprocess size
-	m_gossipLogInstance.GossipLogStack:CalculateSize();	
-	m_gossipLogInstance.GossipLogStack:ReprocessAnchoring();
-	
-	-- Auto Resize Log
-	if(m_GL_CurrentSetSize == 0) then
-		local gossipStackSize = m_gossipLogInstance.GossipLogStack:GetSizeY() + 10;
-		if not(m_GL_MainPanel_SizeY + gossipStackSize > m_GL_MaxAllowedSizeY) then
-			m_gossipLogInstance.MainPanel:SetSizeY(m_GL_MainPanel_SizeY + gossipStackSize);
-			m_gossipLogInstance.GossipLogPanel:SetSizeY(m_GL_GossipLogPanel_SizeY + gossipStackSize);
-			m_gossipLogInstance.GossipScrollBar:SetOffsetX(400);
-		else
-			m_gossipLogInstance.MainPanel:SetSizeY(m_GL_MaxAllowedSizeY);
-			m_gossipLogInstance.GossipLogPanel:SetSizeY(m_GL_MaxAllowedSizeY);
-			m_gossipLogInstance.GossipScrollBar:SetOffsetX(20);
-		end
-	end
-		
-	UpdateGossipLogScrollBar(m_GL_CurrentSetSize);
-	
+  local dbGossipInfo :table = isGossip and GameInfo.Gossips[subType]
+  local msgTypeStr  :string = ReportingStatusTypesInv[msgType]
+  local subTypeStr  :string = dbGossipInfo and dbGossipInfo.GossipType
+  print( "AddNotification(message= ", message, "msgType= ", msgType, msgTypeStr, "subType= ", subType, subTypeStr )
+
+  local gossipMsg   = dbGossipInfo and Locale.Lookup(dbGossipInfo.Message)
+  local gossipDesc  = dbGossipInfo and Locale.Lookup(dbGossipInfo.Description)
+  local gossipGroup = dbGossipInfo and dbGossipInfo.GroupType
+  local gossipIcon  = dbGossipInfo and "ICON_GOSSIP_"..dbGossipInfo.GroupType
+  local gossipVis   = dbGossipInfo and dbGossipInfo.VisibilityLevel
+
+  -- Split the leading icon from gossip text
+  local msgIcon,msgText = match(message, "^(\[ICON.*\]) *(.*)")
+  if not msgIcon then
+    msgIcon = isCombat and "[ICON_DECLARE_SURPRISE_WAR]"
+      or isGossip and "[ICON_You]"
+    msgText = message
+  end
+
+  print( "gossipVis=", gossipVis, "msgIcon=", msgIcon, "gossipIcon=", gossipGroup, "msgText=", msgText, "gossipMsg=", gossipMsg, "gossipDesc=", gossipDesc )
+
+
+  local uiEntry :table
+  -- Remove the earliest entry if the log limit has been reached
+  if m_maxEntries <= #m_EntryInstances then
+    uiEntry = table.remove(m_EntryInstances, 1)
+    -- m_EntryStack:ReleaseChild( uiEntry.EntryRoot )
+    -- uiEntry = m_EntryManager:GetAllocatedInstance()
+    m_EntryManager:ReleaseInstance(uiEntry)
+  end
+
+  -- Get unused Entry instance
+  uiEntry = m_EntryManager:GetInstance()
+
+  -- what for?
+  uiEntry.EntryRoot:SetOffsetX(not isCombat and -3 or 0)
+
+  -- New turn message is centered, the rest left-aligned
+  uiEntry.Message:SetAlign(isTurnEnd and "center" or "left")
+
+  -- Set notification entry text and icon
+  uiEntry.Message:SetText(msgText)
+  uiEntry.Icon:SetText(msgIcon or "")
+  uiEntry.Icon:SetHide(not msgIcon)
+
+  
+  -- Add entry to global instances
+  table.insert(m_EntryInstances, uiEntry)
+
+  -- Update number of new notifications
+  if not isTurnEnd then
+    SetNewMessageCount(m_NewMessageCount + 1)
+  end
+
+  -- Recalculate panel size
+  ContextPtr:RequestRefresh()
 end
 
 
--- Function for splitting strings
-function strSplit(self, delimiter)
-    local result = {};
-    for match in (self..delimiter):gmatch("(.-)"..delimiter) do
-        table.insert(result, match);
-    end
-    return result;
+
+
+-- ===========================================================================
+function AddNewTurnNotification(iTurn :number)
+  local turnLoc = Locale.Lookup("LOC_TOP_PANEL_CURRENT_TURN")
+  turnLoc = string.upper(turnLoc)
+  local message = "[COLOR_FLOAT_GOLD]"..turnLoc.." "..iTurn
+  AddNotification(message, ReportingStatusTypes.TurnEnd)
 end
 
 
--- Empty the log between turns
-function ClearLogs()
-	if not(m_persistGossipLog) then
-		ClearGossipLog();
-	end
-	
-	m_gossipLogNewEntryCount = 0;
-	m_gossipLogInstance.NewLogNumber:SetText("");		
-end
+-- ===========================================================================
+function SetNewMessageCount(count :number)
+  m_NewMessageCount = count
 
--- Empty the log between turns (when persist is disabled)
-function ClearGossipLog()
-	local numLogInstances:number = table.count(m_gossipEntryInstances);
+  local pLabel = m_Instance.NewMessageCount
+  local text = count == 0 and "" or "[ICON_New]"..count;
+  pLabel:SetText(text)
 
-	-- limit chat log
-	for i=1, numLogInstances do
-		m_gossipLogInstance.GossipLogStack:ReleaseChild( m_gossipEntryInstances[i].LogRoot);	
-	end
-
-	-- Reset log
-	m_gossipEntryInstances = {};
-	m_gossipLogInstance.NewLogNumber:SetText("");
-	m_gossipLogInstance.GossipLogStack:CalculateSize();
-	m_gossipLogInstance.GossipLogStack:ReprocessAnchoring();
-
-	-- Reset Log Size
-	if(m_GL_CurrentSetSize == 0) then
-		m_gossipLogInstance.MainPanel:SetSizeY(m_GL_MainPanel_SizeY);
-		m_gossipLogInstance.GossipLogPanel:SetSizeY(m_GL_GossipLogPanel_SizeY);
-		UpdateGossipLogScrollBar(m_gossipLogNewEntryCount);
-	end
+  local tooltipStr = count == 1 and "LOC_FF16_LOG_ENTRY_SINGLE" or "LOC_FF16_LOG_ENTRY_MULTIPLE"
+  local tooltipLoc = count.." "..Locale.Lookup(tooltipStr)
+  pLabel:SetToolTipString(tooltipLoc)
 end
 
 
-function OnScroll(control :table, percent :number)
-  local pScrollPanel = m_gossipLogInstance.GossipLogScrollPanel
-  if pScrollPanel:GetScrollValue() ~= percent then
-    pScrollPanel:SetScrollValue(percent)
+
+
+-- ===========================================================================
+--  Options popup, sliders
+-- ===========================================================================
+function m_OptionsInstance.MinSize:ValidateOtherSlider(value :number)
+  if value > m_ListSizeMax then
+    m_ListSizeMax = value
+    m_OptionsInstance.MaxSize:SetSlider(value)
+  end
+end
+
+function m_OptionsInstance.MaxSize:ValidateOtherSlider(value :number)
+  if value < m_ListSizeMin then
+    m_ListSizeMin = value
+    m_OptionsInstance.MinSize:SetSlider(value)
   end
 end
 
 
--- Toggle Options Panel for Log
-function OnOpenGossipLogOptions()
-	m_gossipOptionsHidden = not m_gossipOptionsHidden
-	m_gossipOptionsInstance.GossipOptionsRoot:SetHide(m_gossipOptionsHidden)
+function m_OptionsInstance.MinSize:SetSlider(value :number)
+  self.Slider:SetStep(value)
+  self.Text:SetText(value)
+end
+
+function m_OptionsInstance.MinSize:OnSlider(a,b,c)
+  -- UI.PlaySound("Main_Menu_Mouse_Over")
+  local value = self.Slider:GetStep()
+  self.Text:SetText(value)
+  self:ValidateOtherSlider(value)
+  RefreshSize()
 end
 
 
--- Intercept screen notifications and forward to log instead
-function UpdateLogs(logString :string, fDisplayTime:number, type:number )
+-- ===========================================================================
+function InitializeOptions()
+  local MinSize = m_OptionsInstance.MinSize
+  local MaxSize = m_OptionsInstance.MaxSize
 
-	if(type == ReportingStatusTypes.GOSSIP) then		
-		if not(m_gossipTurnCounterAdded) then
-			AddTurnCounterToLogs(Game.GetCurrentGameTurn(), 1);
-			m_gossipTurnCounterAdded = true;
-		end
-		
-		UpdateGossipLog(logString, type);
-	elseif(type == ReportingStatusTypes.DEFAULT) then
+  MaxSize.SetSlider = MinSize.SetSlider
+  MaxSize.OnSlider  = MinSize.OnSlider
 
-		if not(m_combatTurnCounterAdded) then
-			AddTurnCounterToLogs(Game.GetCurrentGameTurn(), 2);
-			m_combatTurnCounterAdded = true;
-		end
+  MinSize.Slider:RegisterSliderCallback(function(...) MinSize:OnSlider(...) end)
+  MaxSize.Slider:RegisterSliderCallback(function(...) MaxSize:OnSlider(...) end)
 
-		UpdateGossipLog(logString, type);
-	end
-
-	UI.PlaySound("Main_Menu_Mouse_Over");
-end
-
--- Change the log size based on specified size in options
-function SetGossipLogSizeLock(logSize:number)
-
-	if(logSize == 0) then -- Auto adjust
-
-		local spacer = 10;
-		if(m_gossipLogNewEntryCount == 0) then
-			spacer = 0;
-		end
-		
-		local gossipStackSize = m_gossipLogInstance.GossipLogStack:GetSizeY() + spacer;
-		if not(m_GL_MainPanel_SizeY + gossipStackSize > m_GL_MaxAllowedSizeY) then		
-			m_gossipLogInstance.MainPanel:SetSizeY(m_GL_MainPanel_SizeY + gossipStackSize);
-			m_gossipLogInstance.GossipLogPanel:SetSizeY(m_GL_GossipLogPanel_SizeY + gossipStackSize);		
-		else -- dont allow any bigger than size 8 log
-			m_gossipLogInstance.MainPanel:SetSizeY(m_GL_MaxAllowedSizeY);
-			m_gossipLogInstance.GossipLogPanel:SetSizeY(m_GL_MaxAllowedSizeY);
-		end
-
-	else -- manual lock on size	
-		m_gossipLogInstance.MainPanel:SetSizeY(m_GL_MainPanel_SizeY + m_GL_EntrySize*logSize +10);
-		m_gossipLogInstance.GossipLogPanel:SetSizeY(m_GL_GossipLogPanel_SizeY + m_GL_EntrySize*logSize +10);	
-	end
-	 
-	UpdateGossipLogScrollBar(logSize);
-end
-
--- Show/Hide the scrollbar when necessary
-function UpdateGossipLogScrollBar(logSize:number)
-
-	if(m_persistGossipLog) then
-		local numLogInstances:number = table.count(m_gossipEntryInstances);
-		if(numLogInstances) then
-			if(logSize == 0) then
-				if(numLogInstances > 8) then
-					m_gossipLogInstance.GossipScrollBar:SetOffsetX(20);
-				end
-			else			
-				if(numLogInstances > logSize) then
-					m_gossipLogInstance.GossipScrollBar:SetOffsetX(20);
-				else
-					m_gossipLogInstance.GossipScrollBar:SetOffsetX(400);
-				end
-			end
-		end
-	else
-		if not(logSize == 0) then
-			if(m_gossipLogNewEntryCount > logSize) then
-				m_gossipLogInstance.GossipScrollBar:SetOffsetX(20);
-			else
-				m_gossipLogInstance.GossipScrollBar:SetOffsetX(400);
-			end
-		end
-	end
-end
+  -- Set default slider positions
+  MinSize:SetSlider(m_ListSizeMin)
+  MaxSize:SetSlider(m_ListSizeMax)
 
 
-function AddTurnCounterToLogs(turnNo:number, logType:number)
-	local turnLookup = Locale.Lookup("{LOC_TOP_PANEL_CURRENT_TURN:upper} ");
-	local turnString = "[COLOR_FLOAT_GOLD]" .. turnLookup  .. turnNo;
-	
-	if(m_persistCombatLog and logType == 2) then
-		UpdateCombatLog(turnString, ReportingStatusTypes.DEFAULT);
-	end
-	
-	if(m_persistGossipLog and logType == 1) then
-		UpdateGossipLog(turnString, ReportingStatusTypes.GOSSIP);
-	end
-end
 
+  local function OnClickEmptyLog()
+    local checked = not control:IsSelected()
+    m_EmptyLogEachTurn = checked
+    control:SetSelected(checked)
+  end
 
-function InitializeLogPreferences()
-	-- Log Size Slider
-	m_gossipOptionsInstance.LogSizeSlider:RegisterSliderCallback(
-    	function(option)
-            -- Guard against multiple calls with the same value
-            if(logSize_sliderValue ~= option) then
-                logSize_sliderValue = option;
-                logSize_sliderStep = m_gossipOptionsInstance.LogSizeSlider:GetStep();
-				
-				local logSizeText = "LOC_FF16_LOGSIZE_AUTO";
-                if(logSize_sliderStep == 0) then 
-					logSizeText = "LOC_FF16_LOGSIZE_AUTO";
-				else
-					logSizeText = logSize_sliderStep;
-				end			
-				m_gossipOptionsInstance.LogSizeText:LocalizeAndSetText(logSizeText);       
-
-				if(m_gossipOptionsInstance.LogSizeSlider:GetStep() > m_gossipOptionsInstance.LogMaxSizeSlider:GetStep()+1) then				
-					m_gossipOptionsInstance.LogMaxSizeSlider:SetStep(logSize_sliderStep-1);
-					m_gossipOptionsInstance.LogMaxSizeText:LocalizeAndSetText(logSize_sliderStep); 				
-				end
-				
-				m_GL_CurrentSetSize = logSize_sliderStep;
-				SetGossipLogSizeLock(m_GL_CurrentSetSize);
-				UI.PlaySound("Main_Menu_Mouse_Over");
-            end
-    	end
-    );
-	
-	-- Log Max Size Slider
-	m_gossipOptionsInstance.LogMaxSizeSlider:RegisterSliderCallback(
-    	function(option)
-            -- Guard against multiple calls with the same value
-            if(logMaxSize_sliderValue ~= option) then
-                logMaxSize_sliderValue = option;
-                logMaxSize_sliderStep = m_gossipOptionsInstance.LogMaxSizeSlider:GetStep();
-				
-				local logMaxSizeText = logMaxSize_sliderStep+1;
- 	
-				m_gossipOptionsInstance.LogMaxSizeText:LocalizeAndSetText(logMaxSizeText);   
-
-				if(m_gossipOptionsInstance.LogSizeSlider:GetStep() > m_gossipOptionsInstance.LogMaxSizeSlider:GetStep()) then
-					if(m_gossipOptionsInstance.LogSizeSlider:GetStep() ~= 0) then
-						m_gossipOptionsInstance.LogSizeSlider:SetStep(logMaxSize_sliderStep+1);
-						m_gossipOptionsInstance.LogSizeText:LocalizeAndSetText(logMaxSizeText);
-
-						m_GL_CurrentSetSize = logMaxSize_sliderStep+1;
-						SetGossipLogSizeLock(m_GL_CurrentSetSize);
-						UI.PlaySound("Main_Menu_Mouse_Over");
-					end
-				end
-				
-				m_GL_MaxAllowedSizeY = (m_GL_MainPanel_SizeY+10)+m_GL_EntrySize*(logMaxSize_sliderStep+1);
-				--print(m_GL_MaxAllowedSizeY);
-				
-				if(m_gossipOptionsInstance.LogSizeSlider:GetStep() == 0) then
-					local gossipStackSize = m_gossipLogInstance.GossipLogStack:GetSizeY() + 10 + m_GL_MainPanel_SizeY;
-					--print("Vs", gossipStackSize);
-					if(gossipStackSize >= m_GL_MaxAllowedSizeY) then
-						SetGossipLogSizeLock(logMaxSize_sliderStep+1);
-					end
-				end
-				
-				UI.PlaySound("Main_Menu_Mouse_Over");
-            end
-    	end
-    );
-		
-	-- Set default step positions
-	m_gossipOptionsInstance.LogSizeSlider:SetStep(GlobalParameters.FF16_DEFAULT_LOGSIZE);
-	if(m_gossipOptionsInstance.LogSizeSlider:GetStep() == 0) then
-		m_gossipOptionsInstance.LogSizeText:LocalizeAndSetText("LOC_FF16_LOGSIZE_AUTO");
-	else
-		m_GL_CurrentSetSize = GlobalParameters.FF16_DEFAULT_LOGSIZE;
-		SetGossipLogSizeLock(m_GL_CurrentSetSize);
-		m_gossipOptionsInstance.LogSizeText:LocalizeAndSetText(m_gossipOptionsInstance.LogSizeSlider:GetStep());
-	end
-	
-	m_gossipOptionsInstance.LogMaxSizeSlider:SetStep(GlobalParameters.FF16_DEFAULT_MAXLOGSIZE-1);
-	m_gossipOptionsInstance.LogMaxSizeText:LocalizeAndSetText(m_gossipOptionsInstance.LogMaxSizeSlider:GetStep()+1); 
-	m_GL_MaxAllowedSizeY = (m_GL_MainPanel_SizeY+10)+m_GL_EntrySize*(GlobalParameters.FF16_DEFAULT_MAXLOGSIZE-1);
-
-	local isEmptyLog = GlobalParameters.FF16_DEFAULT_EMPTYLOG;
-	if(isEmptyLog == 0) then
-		m_persistGossipLog = true;
-	else
-		m_persistGossipLog = false;
-	end
-	
-	PopulateCheckBox(m_gossipOptionsInstance.EmptyLogCheckBox, isEmptyLog,
-        function(option)
-            if(option == true) then 
-				m_persistGossipLog = false; 		
-			else
-				m_persistGossipLog = true;
-			end
-        end
-    );
-end
-
-
-function PopulateCheckBox(control, current_value, check_handler, is_locked)
-    if (is_locked == nil) then
-        is_locked = false;
-    end
-
-    if(current_value == 0) then
-        control:SetSelected(false);
-    else
-        control:SetSelected(true);
-    end
-
-    control:SetDisabled(is_locked ~= false);
-
-    if(check_handler) then
-        control:RegisterCallback(Mouse.eLClick,
-            function()
-                local selected = not control:IsSelected();
-                control:SetSelected(selected);
-                check_handler(selected);
-            end
-        );
-        control:RegisterCallback(Mouse.eMouseEnter, function()
-            UI.PlaySound("Main_Menu_Mouse_Over");
-        end);
-    end
-
-end
-
-
-local function Test()
-	ContextPtr:SetInputHandler( 
-	function( pInputStruct ) 
-		local uiMsg = pInputStruct:GetMessageType();
-		if uiMsg == KeyEvents.KeyUp then 
-			local key = pInputStruct:GetKey();
-			if key == Keys.G then LuaEvents.Custom_GossipMessage("Testing out gossip message, this is basically just an average string.", 10, ReportingStatusTypes.GOSSIP ); return true; end
-			if key == Keys.H then LuaEvents.Custom_GossipMessage("[ICON_Production] Egypt built a Granary in Cairo.", 10, ReportingStatusTypes.GOSSIP ); return true; end
-			if key == Keys.J then ClearLogs(); return true; end
-			if key == Keys.F then LuaEvents.Custom_GossipMessage("Testing out gossip message, this is an extra long string. There are a lot of words in this one.", 10, ReportingStatusTypes.GOSSIP ); return true; end
-			if key == Keys.D then AddTurnCounterToLogs(Game.GetCurrentGameTurn(), 1); return true; end
-			if key == Keys.S then LuaEvents.Custom_GossipMessage("Your Warrior (15 damage) attacked an enemy Archer (35 damage)!", 10, ReportingStatusTypes.DEFAULT ); return true; end
-			if key == Keys.A then LuaEvents.Custom_GossipMessage("Your Warrior [ICON_Ranged] Enemy Scout![NEWLINE]Results: [COLOR_FLOAT_GOLD]Dealt 87HP damage!", 10, ReportingStatusTypes.DEFAULT ); return true; end
-		end	
-		return false;
-	end, true);
+  local pCheckBox = m_OptionsInstance.EmptyLogCheckBox
+  pCheckBox:SetSelected(m_EmptyLogEachTurn)
+  pCheckBox:RegisterCallback(Mouse.eLClick, OnClickEmptyLog)
 end
 
 
 
 
-function Initialize()
-	print("Initialize()")
+-- ===========================================================================
+--  Testing
+-- ===========================================================================
+local function DebugTest()
+  local event = Events.StatusMessage
 
-	-- Hot-reload events
-	ContextPtr:SetInitHandler(OnInit);
-	ContextPtr:SetShutdown(OnShutdown);
+  function OnInputHandler(pInputStruct) 
+    local uiMsg = pInputStruct:GetMessageType();
+    if uiMsg == KeyEvents.KeyUp then 
+      local key = pInputStruct:GetKey();
+      if key == Keys.G then event("Testing out gossip message, this is basically just an average string.", 10, ReportingStatusTypes.GOSSIP ); return true; end
+      if key == Keys.H then event("[ICON_Production] Egypt built a Granary in Cairo.", 10, ReportingStatusTypes.GOSSIP ); return true; end
+      if key == Keys.J then OnLocalPlayerTurnEnd(); return true; end
+      if key == Keys.F then event("Testing out gossip message, this is an extra long string. There are a lot of words in this one.", 10, ReportingStatusTypes.GOSSIP ); return true; end
+      if key == Keys.D then AddNewTurnNotification(Game.GetCurrentGameTurn()); return true; end
+      if key == Keys.S then event("Your Warrior (15 damage) attacked an enemy Archer (35 damage)!", 10, ReportingStatusTypes.DEFAULT ); return true; end
+      if key == Keys.A then event("Your Warrior [ICON_Ranged] Enemy Scout![NEWLINE]Results: [COLOR_FLOAT_GOLD]Dealt 87HP damage!", 10, ReportingStatusTypes.DEFAULT ); return true; end
+    end	
+    return false;
+  end
 
-	-- ContextPtr:BuildInstanceForControl( "GossipLogInstance", m_gossipLogInstance, Controls.WorldTrackerVerticalContainer )
-	ContextPtr:BuildInstance( "GossipLogInstance", m_gossipLogInstance )
-	-- ContextPtr:BuildInstanceForControl( "GossipOptionsPanel", m_gossipOptionsInstance, m_gossipLogInstance.MainPanel )
-	m_gossipOptionsInstance = m_gossipLogInstance.GossipOptionsInstance
-
-	if Controls.GossipCheck then
-		Controls.GossipCheck:SetCheck(true)
-		Controls.GossipCheck:RegisterCheckHandler( function() ToggleGossipLog(not Controls.GossipCheck:IsChecked()) end )
-	end
-
-	--FF16 Add events for Gossip Log
-	m_gossipLogInstance.TitleButton:RegisterCallback(Mouse.eLClick, function() ToggleGossipLog() end );
-	m_gossipLogInstance.TitleButton:RegisterCallback(Mouse.eRClick, ClearGossipLog);
-	m_gossipLogInstance.NewLogNumber:RegisterCallback(Mouse.eRClick, ClearGossipLog);
-	m_gossipLogInstance.OptionsButton:RegisterCallback(Mouse.eLClick, OnOpenGossipLogOptions);
-	m_gossipLogInstance.OptionsButton:SetToolTipString(Locale.Lookup("LOC_FF16_NOTIFICATION_LOG_TOOLTIP"));
-	m_gossipLogInstance.GossipLogScrollPanel:RegisterScrollCallback(OnScroll);
-	
-	InitializeLogPreferences();
-	--Test();
+  ContextPtr:SetInputHandler(OnInputHandler, true)
 end
 
 
+
+
+-- ===========================================================================
+--  Init
+-- ===========================================================================
 function OnInit()
-	print("OnInit()")
-	ExposedMembers.WorldTracker:AttachPanel(PANEL_ID, m_gossipLogInstance.MainPanel, Controls.GossipCheck)
-	m_PanelContainer = ExposedMembers.WorldTracker.PanelContainer
-	--[[
-	print( "PanelContainer:", m_PanelContainer, m_PanelContainer:GetID() )
-	m_PanelContainer = m_gossipLogInstance.MainPanel:GetParent()
-	print( "MainPanel:GetParent():", m_PanelContainer, m_PanelContainer:GetID() )
-	m_PanelContainer = m_gossipLogInstance.MainPanel:GetParent():GetParent()
-	print( "MainPanel:GetParent():GetParent():", m_PanelContainer, m_PanelContainer:GetID() )
-	--]]
-
-	LuaEvents.Custom_GossipMessage.Add(UpdateLogs)
-	Events.StatusMessage          .Add(UpdateLogs)
-	Events.LocalPlayerTurnBegin   .Add(OnLocalPlayerTurnBegin)
-	Events.LocalPlayerTurnEnd     .Add(ClearLogs)
+  print("OnInit()")
+  ExposedMembers.WorldTracker:AttachPanel(PANEL_ID, m_Panel, m_CheckBox and m_CheckBox:GetParent())
+  m_PanelContainer = ExposedMembers.WorldTracker.PanelContainer
+  -- ResizePanel()
+  --[[
+  print( "PanelContainer:", m_PanelContainer, m_PanelContainer:GetID() )
+  m_PanelContainer = m_Panel:GetParent()
+  print( "NotificationLogPanel:GetParent():", m_PanelContainer, m_PanelContainer:GetID() )
+  m_PanelContainer = m_Panel:GetParent():GetParent()
+  print( "NotificationLogPanel:GetParent():GetParent():", m_PanelContainer, m_PanelContainer:GetID() )
+  --]]
+  Subscribe()
 end
 
 function OnShutdown()
-	print("OnShutdown()")
-	ExposedMembers.WorldTracker:AttachPanel(PANEL_ID, nil, nil)
-	m_PanelContainer = nil
+  print("OnShutdown()")
+  ExposedMembers.WorldTracker:AttachPanel(PANEL_ID, nil, nil)
+  m_PanelContainer = nil
+  Unsubscribe()
+end
 
-	LuaEvents.Custom_GossipMessage.Remove(UpdateLogs)
-	Events.StatusMessage          .Remove(UpdateLogs)
-	Events.LocalPlayerTurnBegin   .Remove(OnLocalPlayerTurnBegin)
-	Events.LocalPlayerTurnEnd     .Remove(ClearLogs)
+
+-- ===========================================================================
+function Subscribe()
+  Events.StatusMessage        .Add(OnStatusMessage)
+  Events.LocalPlayerTurnBegin .Add(OnLocalPlayerTurnBegin)
+  Events.LocalPlayerTurnEnd   .Add(OnLocalPlayerTurnEnd)
+end
+
+function Unsubscribe()
+  Events.StatusMessage        .Remove(OnStatusMessage)
+  Events.LocalPlayerTurnBegin .Remove(OnLocalPlayerTurnBegin)
+  Events.LocalPlayerTurnEnd   .Remove(OnLocalPlayerTurnEnd)
+end
+
+
+-- ===========================================================================
+function Initialize()
+  print("Initialize()")
+
+  -- Hot-reload events
+  ContextPtr:SetInitHandler(OnInit)
+  ContextPtr:SetShutdown(OnShutdown)
+  ContextPtr:SetRefreshHandler(OnRefresh)
+
+  -- ContextPtr:BuildInstanceForControl( "NotificationLogInstance", m_Instance, Controls.WorldTrackerVerticalContainer )
+  -- ContextPtr:BuildInstance( "NotificationLogInstance", m_Instance )
+  -- ContextPtr:BuildInstanceForControl( "NotificationLogOptionsPopup", m_OptionsInstance, m_Panel )
+
+  if m_CheckBox then
+    m_CheckBox:SetCheck(true)
+    m_CheckBox:RegisterCheckHandler( function() SetHidden(not m_CheckBox:IsChecked()) end )
+  end
+
+  --FF16 Add events for Gossip Log
+  m_Instance.HeaderButton:RegisterCallback(Mouse.eLClick, TogglePanel)
+  -- m_Instance.HeaderButton:RegisterCallback(Mouse.eLClick, ClearNotifications)
+  m_Instance.TitleButton :RegisterCallback(Mouse.eLClick, TogglePanel)
+  m_Instance.TitleButton :RegisterCallback(Mouse.eRClick, ClearNotifications)
+  m_Instance.NewMessageCount:RegisterCallback(Mouse.eLClick, TogglePanel)
+  m_Instance.NewMessageCount:RegisterCallback(Mouse.eRClick, ClearNotifications)
+  m_Instance.OptionsButton:RegisterCallback(Mouse.eLClick, ToggleOptions)
+  m_Instance.OptionsButton:SetToolTipString( Locale.Lookup("LOC_FF16_NOTIFICATION_LOG_TOOLTIP") )
+  
+  InitializeOptions()
+  RefreshSize()
+  -- DebugTest()
 end
 
 
