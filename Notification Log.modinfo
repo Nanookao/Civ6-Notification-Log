@@ -21,6 +21,7 @@
 			<File>Localisation.sql</File>
 		</UpdateText>
 
+<!-- ->
 		<ImportFiles id="NotificationLog_StatusMessagePanel">
 			<Properties>
 				<LoadOrder>6085</LoadOrder>
